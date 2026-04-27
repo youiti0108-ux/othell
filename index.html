@@ -49,12 +49,14 @@
     }
 
     .app {
+      position: relative;
       width: min(100%, 720px);
       background: var(--panel);
       border-radius: var(--radius);
       padding: 18px;
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
+      overflow: hidden;
     }
 
     h1 {
@@ -71,15 +73,27 @@
       font-weight: 700;
       line-height: 1.6;
       margin-bottom: 14px;
-      min-height: 84px;
+      min-height: 92px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
+    .status-main {
+      font-size: 1rem;
+    }
+
+    .status-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
     .summary {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 14px;
     }
@@ -149,20 +163,40 @@
       margin-bottom: 16px;
     }
 
-    button {
+    .control-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      grid-column: 1 / -1;
+    }
+
+    .control-label {
+      font-size: 0.86rem;
+      color: var(--muted);
+      font-weight: 700;
+      padding-left: 4px;
+    }
+
+    button,
+    select {
       border: none;
       border-radius: 16px;
       padding: 14px 16px;
       font-size: 1rem;
       font-weight: 800;
-      cursor: pointer;
       min-height: 52px;
       transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
       touch-action: manipulation;
     }
 
+    button {
+      cursor: pointer;
+    }
+
     button:hover,
-    button:focus-visible {
+    button:focus-visible,
+    select:hover,
+    select:focus-visible {
       filter: brightness(1.03);
       transform: translateY(-1px);
       outline: 3px solid rgba(255, 181, 27, 0.22);
@@ -175,7 +209,8 @@
       box-shadow: 0 8px 20px rgba(243, 181, 27, 0.32);
     }
 
-    .secondary-button {
+    .secondary-button,
+    .difficulty-select {
       background: var(--secondary);
       color: var(--secondary-text);
       box-shadow: 0 8px 20px rgba(31, 122, 69, 0.12);
@@ -210,6 +245,7 @@
       background: transparent;
       padding: 0;
       cursor: default;
+      overflow: hidden;
     }
 
     .cell.is-interactive {
@@ -234,11 +270,23 @@
       cursor: wait;
     }
 
+    .cell.ai-last::before {
+      content: "";
+      position: absolute;
+      inset: 14%;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 243, 191, 0.86);
+      animation: aiPulse 0.9s ease-out 1;
+      pointer-events: none;
+    }
+
     .disc {
       position: absolute;
       inset: 12%;
       border-radius: 50%;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
+      transform-style: preserve-3d;
+      will-change: transform;
     }
 
     .disc.black {
@@ -250,18 +298,29 @@
       border: 1px solid #d0d0d0;
     }
 
+    .disc.is-new {
+      animation: placePop 0.22s ease-out 1;
+    }
+
+    .disc.is-flipped {
+      animation: flipSpin 0.28s ease-out 1;
+      animation-delay: var(--flip-delay, 0ms);
+    }
+
     .assist-badge,
-    .thinking-badge {
+    .thinking-badge,
+    .sound-badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       padding: 6px 12px;
       border-radius: 999px;
-      margin-top: 8px;
       font-size: 0.95rem;
+      margin-top: 8px;
     }
 
-    .assist-badge {
+    .assist-badge,
+    .sound-badge {
       background: rgba(255, 255, 255, 0.7);
       color: var(--secondary-text);
     }
@@ -270,6 +329,117 @@
       background: var(--danger);
       color: #7b4f00;
       font-weight: 800;
+    }
+
+    .result-panel {
+      position: relative;
+      margin-top: 16px;
+      background: linear-gradient(180deg, rgba(255, 250, 230, 0.96) 0%, rgba(255, 243, 191, 0.94) 100%);
+      border-radius: 22px;
+      padding: 20px 18px 18px;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
+      overflow: hidden;
+    }
+
+    .result-panel[hidden] {
+      display: none;
+    }
+
+    .result-title {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 8px;
+      font-size: clamp(1.55rem, 5vw, 2.1rem);
+      text-align: center;
+    }
+
+    .result-message {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .result-score {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 16px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .confetti {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      top: -14px;
+      left: calc(var(--left) * 1%);
+      width: 10px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--color);
+      opacity: 0.92;
+      animation: confettiFall 2.2s ease-in forwards;
+      animation-delay: calc(var(--delay) * 1s);
+    }
+
+    @keyframes placePop {
+      0% {
+        transform: scale(0.65);
+      }
+      70% {
+        transform: scale(1.08);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes flipSpin {
+      0% {
+        transform: rotateY(0deg) scale(0.94);
+      }
+      55% {
+        transform: rotateY(90deg) scale(1.02);
+      }
+      100% {
+        transform: rotateY(180deg) scale(1);
+      }
+    }
+
+    @keyframes aiPulse {
+      0% {
+        transform: scale(0.7);
+        opacity: 0.95;
+      }
+      100% {
+        transform: scale(1.3);
+        opacity: 0;
+      }
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translate3d(0, -12px, 0) rotate(0deg);
+      }
+      100% {
+        transform: translate3d(calc((var(--left) - 50) * 0.24px), 170px, 0) rotate(280deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 480px) {
@@ -290,11 +460,13 @@
 
       .info-card,
       .score,
-      .status {
+      .status,
+      .result-panel {
         border-radius: 14px;
       }
 
-      button {
+      button,
+      select {
         font-size: 0.96rem;
         min-height: 50px;
         padding: 12px 10px;
@@ -314,12 +486,20 @@
         <span class="info-value" id="mode-display">2&#20154;&#23550;&#25126;</span>
       </div>
       <div class="info-card">
+        <span class="info-label">AI&#38627;&#26131;&#24230;</span>
+        <span class="info-value" id="difficulty-display">&#12405;&#12388;&#12358;</span>
+      </div>
+      <div class="info-card">
         <span class="info-label">&#29694;&#22312;&#12398;&#12479;&#12540;&#12531;</span>
         <span class="info-value" id="turn-display">&#40658;</span>
       </div>
       <div class="info-card">
         <span class="info-label">&#12450;&#12471;&#12473;&#12488;</span>
         <span class="info-value" id="assist-display">ON</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">&#38899;</span>
+        <span class="info-value" id="sound-display">OFF</span>
       </div>
       <div class="info-card">
         <span class="info-label">&#23550;&#23616;&#29366;&#27841;</span>
@@ -334,14 +514,32 @@
 
     <section class="controls" aria-label="&#25805;&#20316;&#12508;&#12479;&#12531;">
       <button id="restart-button" class="primary-button" type="button">&#12522;&#12473;&#12479;&#12540;&#12488;</button>
+      <button id="undo-button" class="secondary-button" type="button">1&#25163;&#25147;&#12427;</button>
       <button id="assist-button" class="secondary-button active" type="button">&#12450;&#12471;&#12473;&#12488; ON</button>
+      <button id="sound-button" class="secondary-button" type="button">&#38899; OFF</button>
       <button id="two-player-button" class="secondary-button active" type="button">2&#20154;&#23550;&#25126;</button>
       <button id="ai-button" class="secondary-button" type="button">AI&#23550;&#25126;</button>
+      <div class="control-field">
+        <label class="control-label" for="difficulty-select">AI&#12398;&#24375;&#12373;</label>
+        <select id="difficulty-select" class="difficulty-select">
+          <option value="easy">&#12420;&#12373;&#12375;&#12356;</option>
+          <option value="normal" selected>&#12405;&#12388;&#12358;</option>
+          <option value="hard">&#12388;&#12424;&#12356;</option>
+        </select>
+      </div>
     </section>
 
     <div class="board-wrap">
       <div class="board" id="board" role="grid" aria-label="&#12458;&#12475;&#12525;&#30436;"></div>
     </div>
+
+    <section class="result-panel" id="result-panel" hidden aria-live="polite">
+      <div class="confetti" id="confetti"></div>
+      <h2 class="result-title" id="result-title"></h2>
+      <p class="result-message" id="result-message"></p>
+      <p class="result-score" id="result-score"></p>
+      <button id="result-restart-button" class="primary-button" type="button">&#12418;&#12358;&#19968;&#22238;&#12473;&#12479;&#12540;&#12488;</button>
+    </section>
   </main>
 
   <script>
@@ -351,12 +549,30 @@
     const WHITE = -1;
     const MODE_TWO_PLAYER = "two-player";
     const MODE_AI = "ai";
+    const DIFFICULTY_EASY = "easy";
+    const DIFFICULTY_NORMAL = "normal";
+    const DIFFICULTY_HARD = "hard";
     const AI_DELAY_MS = 650;
+    const FLIP_DELAY_MS = 60;
+    const FLIP_ANIMATION_MS = 280;
+    const ANIMATION_CLEAR_MS = 700;
     const CORNERS = new Set(["0-0", "0-7", "7-0", "7-7"]);
+    const X_SQUARES = new Set(["1-1", "1-6", "6-1", "6-6"]);
+    const C_SQUARES = new Set(["0-1", "1-0", "0-6", "1-7", "6-0", "7-1", "6-7", "7-6"]);
     const DIRECTIONS = [
       [-1, -1], [-1, 0], [-1, 1],
       [0, -1],           [0, 1],
       [1, -1],  [1, 0],  [1, 1]
+    ];
+    const POSITION_WEIGHTS = [
+      [120, -20, 20, 5, 5, 20, -20, 120],
+      [-20, -40, -5, -5, -5, -5, -40, -20],
+      [20, -5, 15, 3, 3, 15, -5, 20],
+      [5, -5, 3, 3, 3, 3, -5, 5],
+      [5, -5, 3, 3, 3, 3, -5, 5],
+      [20, -5, 15, 3, 3, 15, -5, 20],
+      [-20, -40, -5, -5, -5, -5, -40, -20],
+      [120, -20, 20, 5, 5, 20, -20, 120]
     ];
 
     const TEXT = {
@@ -364,18 +580,32 @@
       white: "\u767d",
       modeTwoPlayer: "2\u4eba\u5bfe\u6226",
       modeAi: "AI\u5bfe\u6226",
+      difficultyEasy: "\u3084\u3055\u3057\u3044",
+      difficultyNormal: "\u3075\u3064\u3046",
+      difficultyHard: "\u3064\u3088\u3044",
       gameOver: "\u30b2\u30fc\u30e0\u7d42\u4e86",
       normalPlay: "\u901a\u5e38\u30d7\u30ec\u30a4\u4e2d",
       assistOn: "\u30a2\u30b7\u30b9\u30c8 ON",
       assistOff: "\u30a2\u30b7\u30b9\u30c8 OFF",
       assistBadge: "\u30a2\u30b7\u30b9\u30c8: ",
+      soundOn: "\u97f3 ON",
+      soundOff: "\u97f3 OFF",
+      soundBadge: "\u97f3: ",
       aiThinking: "AI\u8003\u3048\u4e2d...",
       currentTurn: "\u73fe\u5728\u306e\u30bf\u30fc\u30f3\u306f",
       turnSuffix: "\u3067\u3059\u3002",
       noMovePass: "\u306f\u7f6e\u3051\u308b\u5834\u6240\u304c\u306a\u3044\u305f\u3081\u30d1\u30b9\u3067\u3059\u3002",
+      aiPassed: "AI\u306f\u7f6e\u3051\u308b\u5834\u6240\u304c\u306a\u3044\u305f\u3081\u30d1\u30b9\u3067\u3059\u3002",
       blackWin: "\u30b2\u30fc\u30e0\u7d42\u4e86\u3002\u9ed2\u306e\u52dd\u3061\u3067\u3059\u3002",
       whiteWin: "\u30b2\u30fc\u30e0\u7d42\u4e86\u3002\u767d\u306e\u52dd\u3061\u3067\u3059\u3002",
-      draw: "\u30b2\u30fc\u30e0\u7d42\u4e86\u3002\u5f15\u304d\u5206\u3051\u3067\u3059\u3002"
+      draw: "\u30b2\u30fc\u30e0\u7d42\u4e86\u3002\u5f15\u304d\u5206\u3051\u3067\u3059\u3002",
+      resultBlackWin: "\u9ed2\u306e\u52dd\u3061",
+      resultWhiteWin: "\u767d\u306e\u52dd\u3061",
+      resultDraw: "\u5f15\u304d\u5206\u3051",
+      resultCongrats: "\u304a\u3081\u3067\u3068\u3046\uff01",
+      resultKeepGoing: "\u60dc\u3057\u3044\u4e00\u5c40\u3067\u3057\u305f\u3002",
+      resultGoodFight: "\u3044\u3044\u52dd\u8ca0\uff01",
+      resultScorePrefix: "\u30b9\u30b3\u30a2: "
     };
 
     const boardElement = document.getElementById("board");
@@ -383,13 +613,24 @@
     const blackCountElement = document.getElementById("black-count");
     const whiteCountElement = document.getElementById("white-count");
     const modeDisplayElement = document.getElementById("mode-display");
+    const difficultyDisplayElement = document.getElementById("difficulty-display");
     const turnDisplayElement = document.getElementById("turn-display");
     const assistDisplayElement = document.getElementById("assist-display");
+    const soundDisplayElement = document.getElementById("sound-display");
     const gameDetailElement = document.getElementById("game-detail");
     const restartButton = document.getElementById("restart-button");
+    const undoButton = document.getElementById("undo-button");
+    const resultRestartButton = document.getElementById("result-restart-button");
     const assistButton = document.getElementById("assist-button");
+    const soundButton = document.getElementById("sound-button");
     const twoPlayerButton = document.getElementById("two-player-button");
     const aiButton = document.getElementById("ai-button");
+    const difficultySelect = document.getElementById("difficulty-select");
+    const resultPanel = document.getElementById("result-panel");
+    const resultTitleElement = document.getElementById("result-title");
+    const resultMessageElement = document.getElementById("result-message");
+    const resultScoreElement = document.getElementById("result-score");
+    const confettiElement = document.getElementById("confetti");
 
     let board = [];
     let currentPlayer = BLACK;
@@ -397,8 +638,23 @@
     let statusMessage = "";
     let gameMode = MODE_TWO_PLAYER;
     let assistEnabled = true;
+    let soundEnabled = false;
+    let aiDifficulty = DIFFICULTY_NORMAL;
     let aiThinking = false;
     let aiTimerId = null;
+    let animationTimerId = null;
+    let audioContext = null;
+    let history = [];
+    let moveEffects = createEmptyEffects();
+    let resultState = null;
+
+    function createEmptyEffects() {
+      return {
+        placedKey: null,
+        flippedKeys: [],
+        aiKey: null
+      };
+    }
 
     function createInitialBoard() {
       const newBoard = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
@@ -409,8 +665,20 @@
       return newBoard;
     }
 
+    function cloneBoard(sourceBoard) {
+      return sourceBoard.map((row) => row.slice());
+    }
+
     function isInside(row, col) {
       return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+    }
+
+    function getKey(row, col) {
+      return row + "-" + col;
+    }
+
+    function isEdge(row, col) {
+      return row === 0 || row === SIZE - 1 || col === 0 || col === SIZE - 1;
     }
 
     function getPlayerName(player) {
@@ -421,11 +689,115 @@
       return mode === MODE_AI ? TEXT.modeAi : TEXT.modeTwoPlayer;
     }
 
+    function getDifficultyName(difficulty) {
+      if (difficulty === DIFFICULTY_EASY) {
+        return TEXT.difficultyEasy;
+      }
+      if (difficulty === DIFFICULTY_HARD) {
+        return TEXT.difficultyHard;
+      }
+      return TEXT.difficultyNormal;
+    }
+
     function clearAiTimer() {
       if (aiTimerId !== null) {
         window.clearTimeout(aiTimerId);
         aiTimerId = null;
       }
+    }
+
+    function clearAnimationTimer() {
+      if (animationTimerId !== null) {
+        window.clearTimeout(animationTimerId);
+        animationTimerId = null;
+      }
+    }
+
+    function clearMoveEffects(shouldRender) {
+      clearAnimationTimer();
+      moveEffects = createEmptyEffects();
+      if (shouldRender) {
+        render();
+      }
+    }
+
+    function pushHistorySnapshot() {
+      history.push({
+        board: JSON.parse(JSON.stringify(board)),
+        currentPlayer,
+        gameOver,
+        statusMessage
+      });
+    }
+
+    function canUndo() {
+      return !aiThinking && history.length > 0;
+    }
+
+    function restoreSnapshot(snapshot) {
+      board = JSON.parse(JSON.stringify(snapshot.board));
+      currentPlayer = snapshot.currentPlayer;
+      gameOver = snapshot.gameOver;
+      statusMessage = snapshot.statusMessage;
+      resultState = gameOver ? getResultState() : null;
+      aiThinking = false;
+      clearAiTimer();
+      clearMoveEffects(false);
+    }
+
+    function undoMove() {
+      if (!canUndo()) {
+        return;
+      }
+
+      let snapshot = history.pop();
+
+      if (gameMode === MODE_AI) {
+        while (snapshot && snapshot.currentPlayer !== BLACK && history.length > 0) {
+          snapshot = history.pop();
+        }
+      }
+
+      if (!snapshot) {
+        return;
+      }
+
+      restoreSnapshot(snapshot);
+      render();
+    }
+
+    function setMoveEffects(placedKey, flippedKeys, aiKey) {
+      clearAnimationTimer();
+      moveEffects = {
+        placedKey,
+        flippedKeys,
+        aiKey
+      };
+      animationTimerId = window.setTimeout(() => {
+        moveEffects = createEmptyEffects();
+        render();
+      }, ANIMATION_CLEAR_MS);
+    }
+
+    function buildFlipSequence(row, col, flips) {
+      return flips
+        .map(([flipRow, flipCol], index) => ({
+          row: flipRow,
+          col: flipCol,
+          key: getKey(flipRow, flipCol),
+          distance: Math.abs(flipRow - row) + Math.abs(flipCol - col),
+          originalIndex: index
+        }))
+        .sort((left, right) => {
+          if (left.distance !== right.distance) {
+            return left.distance - right.distance;
+          }
+          return left.originalIndex - right.originalIndex;
+        })
+        .map((flip, index) => ({
+          key: flip.key,
+          delay: index * FLIP_DELAY_MS
+        }));
     }
 
     function getFlips(targetBoard, row, col, player) {
@@ -467,11 +839,11 @@
       return moves;
     }
 
-    function countStones() {
+    function countStonesOnBoard(targetBoard) {
       let black = 0;
       let white = 0;
 
-      for (const row of board) {
+      for (const row of targetBoard) {
         for (const cell of row) {
           if (cell === BLACK) {
             black += 1;
@@ -484,17 +856,109 @@
       return { black, white };
     }
 
-    function applyMove(row, col, player) {
-      const flips = getFlips(board, row, col, player);
+    function countStones() {
+      return countStonesOnBoard(board);
+    }
+
+    function applyMoveToBoard(targetBoard, row, col, player) {
+      const flips = getFlips(targetBoard, row, col, player);
       if (flips.length === 0) {
-        return false;
+        return null;
       }
 
-      board[row][col] = player;
+      targetBoard[row][col] = player;
       for (const [flipRow, flipCol] of flips) {
-        board[flipRow][flipCol] = player;
+        targetBoard[flipRow][flipCol] = player;
       }
-      return true;
+
+      return flips;
+    }
+
+    function applyMove(row, col, player) {
+      return applyMoveToBoard(board, row, col, player);
+    }
+
+    function simulateMove(targetBoard, move, player) {
+      const simulatedBoard = cloneBoard(targetBoard);
+      applyMoveToBoard(simulatedBoard, move.row, move.col, player);
+      return simulatedBoard;
+    }
+
+    function getBoardEvaluation(targetBoard) {
+      let positionScore = 0;
+
+      for (let row = 0; row < SIZE; row += 1) {
+        for (let col = 0; col < SIZE; col += 1) {
+          positionScore += targetBoard[row][col] * POSITION_WEIGHTS[row][col];
+        }
+      }
+
+      const counts = countStonesOnBoard(targetBoard);
+      const mobilityScore = (getValidMoves(targetBoard, WHITE).length - getValidMoves(targetBoard, BLACK).length) * 6;
+      const stoneScore = (counts.white - counts.black) * 2;
+
+      return (positionScore * -1) + mobilityScore + stoneScore;
+    }
+
+    function getHardMoveScore(move) {
+      const moveKey = getKey(move.row, move.col);
+      const simulatedBoard = simulateMove(board, move, WHITE);
+      let score = getBoardEvaluation(simulatedBoard);
+
+      if (CORNERS.has(moveKey)) {
+        score += 10000;
+      } else if (X_SQUARES.has(moveKey)) {
+        score -= 900;
+      } else if (C_SQUARES.has(moveKey)) {
+        score -= 500;
+      } else if (isEdge(move.row, move.col)) {
+        score += 120;
+      }
+
+      score += move.flips.length * 5;
+      return score;
+    }
+
+    function chooseAiMove(validMoves) {
+      if (aiDifficulty === DIFFICULTY_EASY) {
+        return validMoves[Math.floor(Math.random() * validMoves.length)];
+      }
+
+      if (aiDifficulty === DIFFICULTY_NORMAL) {
+        const cornerMoves = validMoves.filter((move) => CORNERS.has(getKey(move.row, move.col)));
+        const candidateMoves = cornerMoves.length > 0 ? cornerMoves : validMoves;
+        let bestScore = -1;
+        let bestMoves = [];
+
+        for (const move of candidateMoves) {
+          const score = move.flips.length;
+          if (score > bestScore) {
+            bestScore = score;
+            bestMoves = [move];
+          } else if (score === bestScore) {
+            bestMoves.push(move);
+          }
+        }
+
+        return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+      }
+
+      const cornerMoves = validMoves.filter((move) => CORNERS.has(getKey(move.row, move.col)));
+      const candidateMoves = cornerMoves.length > 0 ? cornerMoves : validMoves;
+      let bestScore = Number.NEGATIVE_INFINITY;
+      let bestMoves = [];
+
+      for (const move of candidateMoves) {
+        const score = getHardMoveScore(move);
+        if (score > bestScore) {
+          bestScore = score;
+          bestMoves = [move];
+        } else if (score === bestScore) {
+          bestMoves.push(move);
+        }
+      }
+
+      return bestMoves[Math.floor(Math.random() * bestMoves.length)];
     }
 
     function getGameResultMessage() {
@@ -509,11 +973,40 @@
       return TEXT.draw;
     }
 
+    function getResultState() {
+      const counts = countStones();
+      const scoreLine = TEXT.resultScorePrefix + TEXT.black + " " + counts.black + " - " + counts.white + " " + TEXT.white;
+
+      if (counts.black > counts.white) {
+        return {
+          title: TEXT.resultBlackWin,
+          message: gameMode === MODE_AI ? TEXT.resultCongrats : TEXT.resultCongrats,
+          scoreLine
+        };
+      }
+
+      if (counts.white > counts.black) {
+        return {
+          title: TEXT.resultWhiteWin,
+          message: gameMode === MODE_AI ? TEXT.resultKeepGoing : TEXT.resultCongrats,
+          scoreLine
+        };
+      }
+
+      return {
+        title: TEXT.resultDraw,
+        message: TEXT.resultGoodFight,
+        scoreLine
+      };
+    }
+
     function finishGame() {
       gameOver = true;
       aiThinking = false;
       clearAiTimer();
       statusMessage = getGameResultMessage();
+      resultState = getResultState();
+      playOutcomeSound();
     }
 
     function resolveTurnFlow() {
@@ -538,23 +1031,134 @@
       finishGame();
     }
 
-    function chooseAiMove(validMoves) {
-      const cornerMoves = validMoves.filter((move) => CORNERS.has(move.row + "-" + move.col));
-      const candidateMoves = cornerMoves.length > 0 ? cornerMoves : validMoves;
-      let bestScore = -1;
-      let bestMoves = [];
-
-      for (const move of candidateMoves) {
-        const score = move.flips.length;
-        if (score > bestScore) {
-          bestScore = score;
-          bestMoves = [move];
-        } else if (score === bestScore) {
-          bestMoves.push(move);
-        }
+    function ensureAudioContext() {
+      if (!window.AudioContext && !window.webkitAudioContext) {
+        return null;
       }
 
-      return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+      if (!audioContext) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioContextClass();
+      }
+
+      if (audioContext.state === "suspended") {
+        audioContext.resume().catch(() => {
+          // Audio error should not block gameplay.
+        });
+      }
+
+      return audioContext;
+    }
+
+    function createNoiseBuffer(context) {
+      const sampleRate = context.sampleRate;
+      const length = Math.max(1, Math.floor(sampleRate * 0.05));
+      const buffer = context.createBuffer(1, length, sampleRate);
+      const channel = buffer.getChannelData(0);
+
+      for (let index = 0; index < length; index += 1) {
+        const fade = 1 - (index / length);
+        channel[index] = (Math.random() * 2 - 1) * fade;
+      }
+
+      return buffer;
+    }
+
+    function playTone(options) {
+      if (!soundEnabled) {
+        return;
+      }
+
+      const context = ensureAudioContext();
+      if (!context) {
+        return;
+      }
+
+      const startAt = context.currentTime + (options.delay || 0);
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+
+      oscillator.type = options.type || "triangle";
+      oscillator.frequency.setValueAtTime(options.from, startAt);
+      if (typeof options.to === "number") {
+        oscillator.frequency.exponentialRampToValueAtTime(Math.max(options.to, 1), startAt + options.duration);
+      }
+
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(options.volume || 0.03, startAt + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + options.duration);
+
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(startAt);
+      oscillator.stop(startAt + options.duration + 0.03);
+    }
+
+    function playNoise(options) {
+      if (!soundEnabled) {
+        return;
+      }
+
+      const context = ensureAudioContext();
+      if (!context) {
+        return;
+      }
+
+      const startAt = context.currentTime + (options.delay || 0);
+      const source = context.createBufferSource();
+      const gain = context.createGain();
+      const filter = context.createBiquadFilter();
+
+      source.buffer = createNoiseBuffer(context);
+      filter.type = options.filterType || "bandpass";
+      filter.frequency.setValueAtTime(options.frequency || 1800, startAt);
+      filter.Q.setValueAtTime(options.q || 0.8, startAt);
+
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(options.volume || 0.012, startAt + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + options.duration);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(context.destination);
+      source.start(startAt);
+      source.stop(startAt + options.duration + 0.01);
+    }
+
+    function playPlaceSound() {
+      playNoise({ duration: 0.035, volume: 0.015, frequency: 1700, q: 1.1 });
+      playTone({ from: 620, to: 380, duration: 0.03, volume: 0.012, type: "triangle" });
+    }
+
+    function playFlipSound(delayMs) {
+      const delay = delayMs / 1000;
+      playNoise({ duration: 0.022, volume: 0.008, frequency: 2200, q: 1.3, delay });
+      playTone({ from: 520, to: 340, duration: 0.025, volume: 0.008, type: "triangle", delay });
+    }
+
+    function playOutcomeSound() {
+      playTone({ from: 330, to: 420, duration: 0.15, volume: 0.03 });
+      playTone({ from: 420, to: 520, duration: 0.18, volume: 0.03, delay: 0.12 });
+      playTone({ from: 520, to: 660, duration: 0.2, volume: 0.03, delay: 0.24 });
+    }
+
+    function applyMoveWithEffects(row, col, player, options) {
+      const flips = applyMove(row, col, player);
+      if (!flips) {
+        return false;
+      }
+
+      const placedKey = getKey(row, col);
+      const flipSequence = buildFlipSequence(row, col, flips);
+      const aiKey = options && options.isAi ? placedKey : null;
+
+      playPlaceSound();
+      for (const flipEffect of flipSequence) {
+        playFlipSound(flipEffect.delay);
+      }
+
+      setMoveEffects(placedKey, flipSequence, aiKey);
+      return true;
     }
 
     function maybeStartAiTurn() {
@@ -569,7 +1173,11 @@
       const validMoves = getValidMoves(board, WHITE);
       if (validMoves.length === 0) {
         aiThinking = false;
+        statusMessage = TEXT.aiPassed;
+        currentPlayer = BLACK;
+        resolveTurnFlow();
         render();
+        maybeStartAiTurn();
         return;
       }
 
@@ -586,6 +1194,8 @@
         const latestMoves = getValidMoves(board, WHITE);
         if (latestMoves.length === 0) {
           aiThinking = false;
+          statusMessage = TEXT.aiPassed;
+          currentPlayer = BLACK;
           resolveTurnFlow();
           render();
           maybeStartAiTurn();
@@ -593,7 +1203,15 @@
         }
 
         const selectedMove = chooseAiMove(latestMoves);
-        applyMove(selectedMove.row, selectedMove.col, WHITE);
+        pushHistorySnapshot();
+        const placed = applyMoveWithEffects(selectedMove.row, selectedMove.col, WHITE, { isAi: true });
+        if (!placed) {
+          history.pop();
+          aiThinking = false;
+          render();
+          return;
+        }
+
         currentPlayer = BLACK;
         aiThinking = false;
         statusMessage = "";
@@ -612,8 +1230,11 @@
         return;
       }
 
-      const placed = applyMove(row, col, currentPlayer);
+      ensureAudioContext();
+      pushHistorySnapshot();
+      const placed = applyMoveWithEffects(row, col, currentPlayer, { isAi: false });
       if (!placed) {
+        history.pop();
         return;
       }
 
@@ -633,9 +1254,55 @@
       restartGame();
     }
 
+    function setDifficulty(difficulty) {
+      if (aiDifficulty === difficulty) {
+        return;
+      }
+
+      aiDifficulty = difficulty;
+      restartGame();
+    }
+
     function toggleAssist() {
       assistEnabled = !assistEnabled;
       render();
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      if (soundEnabled) {
+        ensureAudioContext();
+        playTone({ from: 240, to: 340, duration: 0.08, volume: 0.02 });
+      }
+      render();
+    }
+
+    function createConfettiMarkup() {
+      const colors = ["#f3b51b", "#ffffff", "#1f7a45", "#ea7a3c", "#2f8cff"];
+      let markup = "";
+
+      for (let index = 0; index < 18; index += 1) {
+        const left = 6 + index * 5;
+        const delay = (index % 6) * 0.08;
+        const color = colors[index % colors.length];
+        markup += '<span class="confetti-piece" style="--left:' + left + ";--delay:" + delay + ";--color:" + color + '"></span>';
+      }
+
+      return markup;
+    }
+
+    function updateResultPanel() {
+      if (!gameOver || !resultState) {
+        resultPanel.hidden = true;
+        confettiElement.innerHTML = "";
+        return;
+      }
+
+      resultPanel.hidden = false;
+      resultTitleElement.textContent = resultState.title;
+      resultMessageElement.textContent = resultState.message;
+      resultScoreElement.textContent = resultState.scoreLine;
+      confettiElement.innerHTML = createConfettiMarkup();
     }
 
     function getStatusHtml() {
@@ -644,23 +1311,27 @@
         ? statusMessage + " " + TEXT.black + " " + counts.black + " - " + counts.white + " " + TEXT.white
         : (statusMessage || (TEXT.currentTurn + getPlayerName(currentPlayer) + TEXT.turnSuffix));
 
-      const badges = [];
-      badges.push('<div class="assist-badge">' + TEXT.assistBadge + (assistEnabled ? "ON" : "OFF") + "</div>");
+      let badges = '<div class="status-badges">';
+      badges += '<div class="assist-badge">' + TEXT.assistBadge + (assistEnabled ? "ON" : "OFF") + "</div>";
+      badges += '<div class="sound-badge">' + TEXT.soundBadge + (soundEnabled ? "ON" : "OFF") + "</div>";
       if (!gameOver && aiThinking) {
-        badges.push('<div class="thinking-badge">' + TEXT.aiThinking + "</div>");
+        badges += '<div class="thinking-badge">' + TEXT.aiThinking + "</div>";
       }
+      badges += "</div>";
 
-      return "<div>" + mainText + badges.join("") + "</div>";
+      return '<div><div class="status-main">' + mainText + "</div>" + badges + "</div>";
     }
 
     function updateHeaderInfo() {
       const counts = countStones();
       modeDisplayElement.textContent = getModeName(gameMode);
+      difficultyDisplayElement.textContent = getDifficultyName(aiDifficulty);
       turnDisplayElement.textContent = gameOver ? TEXT.gameOver : getPlayerName(currentPlayer);
       assistDisplayElement.textContent = assistEnabled ? "ON" : "OFF";
+      soundDisplayElement.textContent = soundEnabled ? "ON" : "OFF";
 
       if (gameOver) {
-        gameDetailElement.textContent = TEXT.black + " " + counts.black + " - " + counts.white + " " + TEXT.white;
+        gameDetailElement.textContent = TEXT.resultScorePrefix + TEXT.black + " " + counts.black + " - " + counts.white + " " + TEXT.white;
       } else if (aiThinking) {
         gameDetailElement.textContent = TEXT.aiThinking;
       } else {
@@ -670,14 +1341,18 @@
 
     function updateButtons() {
       assistButton.textContent = assistEnabled ? TEXT.assistOn : TEXT.assistOff;
+      soundButton.textContent = soundEnabled ? TEXT.soundOn : TEXT.soundOff;
       assistButton.classList.toggle("active", assistEnabled);
+      soundButton.classList.toggle("active", soundEnabled);
       twoPlayerButton.classList.toggle("active", gameMode === MODE_TWO_PLAYER);
       aiButton.classList.toggle("active", gameMode === MODE_AI);
+      undoButton.disabled = !canUndo();
+      difficultySelect.value = aiDifficulty;
     }
 
     function renderBoard() {
       const validMoves = gameOver ? [] : getValidMoves(board, currentPlayer);
-      const validMap = new Map(validMoves.map((move) => [move.row + "-" + move.col, move]));
+      const validMap = new Map(validMoves.map((move) => [getKey(move.row, move.col), move]));
       const shouldLockBoard = gameOver || aiThinking || (gameMode === MODE_AI && currentPlayer === WHITE);
 
       boardElement.innerHTML = "";
@@ -690,12 +1365,24 @@
           cellButton.setAttribute("role", "gridcell");
           cellButton.setAttribute("aria-label", String(row + 1) + "\u884c" + String(col + 1) + "\u5217");
 
-          const key = row + "-" + col;
+          const key = getKey(row, col);
           const isPlayable = validMap.has(key);
+
+          if (moveEffects.aiKey === key) {
+            cellButton.classList.add("ai-last");
+          }
 
           if (board[row][col] !== EMPTY) {
             const disc = document.createElement("div");
             disc.className = "disc " + (board[row][col] === BLACK ? "black" : "white");
+            if (moveEffects.placedKey === key) {
+              disc.classList.add("is-new");
+            }
+            const flipEffect = moveEffects.flippedKeys.find((effect) => effect.key === key);
+            if (flipEffect) {
+              disc.classList.add("is-flipped");
+              disc.style.setProperty("--flip-delay", flipEffect.delay + "ms");
+            }
             cellButton.appendChild(disc);
             cellButton.disabled = true;
           } else if (shouldLockBoard) {
@@ -722,15 +1409,19 @@
       updateHeaderInfo();
       updateButtons();
       renderBoard();
+      updateResultPanel();
     }
 
     function restartGame() {
       clearAiTimer();
+      clearMoveEffects(false);
       board = createInitialBoard();
       currentPlayer = BLACK;
       gameOver = false;
       statusMessage = "";
       aiThinking = false;
+      history = [];
+      resultState = null;
       render();
       maybeStartAiTurn();
     }
@@ -746,9 +1437,13 @@
     }
 
     restartButton.addEventListener("click", restartGame);
+    undoButton.addEventListener("click", undoMove);
+    resultRestartButton.addEventListener("click", restartGame);
     assistButton.addEventListener("click", toggleAssist);
+    soundButton.addEventListener("click", toggleSound);
     twoPlayerButton.addEventListener("click", () => setMode(MODE_TWO_PLAYER));
     aiButton.addEventListener("click", () => setMode(MODE_AI));
+    difficultySelect.addEventListener("change", (event) => setDifficulty(event.target.value));
 
     registerServiceWorker();
     restartGame();
