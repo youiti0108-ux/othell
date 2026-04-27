@@ -1,4 +1,4 @@
-const CACHE_NAME = "othello-pwa-v1";
+const CACHE_NAME = "othello-pwa-v3";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
