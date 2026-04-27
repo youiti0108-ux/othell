@@ -345,6 +345,43 @@
       display: none;
     }
 
+    .update-banner {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      width: min(calc(100% - 24px), 420px);
+      background: rgba(47, 38, 24, 0.94);
+      color: #fffdf5;
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+      z-index: 20;
+    }
+
+    .update-banner[hidden] {
+      display: none;
+    }
+
+    .update-banner-text {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .update-banner-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .update-button {
+      min-height: 44px;
+      padding: 10px 14px;
+      font-size: 0.94rem;
+    }
+
     .result-title {
       position: relative;
       z-index: 1;
@@ -542,6 +579,13 @@
     </section>
   </main>
 
+  <aside class="update-banner" id="update-banner" hidden aria-live="polite">
+    <div class="update-banner-text">&#26032;&#12375;&#12356;&#12496;&#12540;&#12472;&#12519;&#12531;&#12364;&#12354;&#12426;&#12414;&#12377;</div>
+    <div class="update-banner-actions">
+      <button id="update-button" class="primary-button update-button" type="button">&#26356;&#26032;&#12377;&#12427;</button>
+    </div>
+  </aside>
+
   <script>
     const SIZE = 8;
     const EMPTY = 0;
@@ -631,6 +675,8 @@
     const resultMessageElement = document.getElementById("result-message");
     const resultScoreElement = document.getElementById("result-score");
     const confettiElement = document.getElementById("confetti");
+    const updateBannerElement = document.getElementById("update-banner");
+    const updateButtonElement = document.getElementById("update-button");
 
     let board = [];
     let currentPlayer = BLACK;
@@ -647,6 +693,7 @@
     let history = [];
     let moveEffects = createEmptyEffects();
     let resultState = null;
+    let waitingWorker = null;
 
     function createEmptyEffects() {
       return {
@@ -1429,7 +1476,44 @@
     function registerServiceWorker() {
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          navigator.serviceWorker.register("./sw.js").catch(() => {
+          navigator.serviceWorker.register("./sw.js").then((registration) => {
+            function showUpdateBanner(worker) {
+              waitingWorker = worker;
+              updateBannerElement.hidden = false;
+            }
+
+            function watchInstallingWorker(worker) {
+              if (!worker) {
+                return;
+              }
+
+              worker.addEventListener("statechange", () => {
+                if (worker.state === "installed" && navigator.serviceWorker.controller) {
+                  showUpdateBanner(worker);
+                }
+              });
+            }
+
+            if (registration.waiting) {
+              showUpdateBanner(registration.waiting);
+            }
+
+            watchInstallingWorker(registration.installing);
+
+            registration.addEventListener("updatefound", () => {
+              watchInstallingWorker(registration.installing);
+            });
+
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener("controllerchange", () => {
+              if (refreshing) {
+                return;
+              }
+
+              refreshing = true;
+              window.location.reload();
+            });
+          }).catch(() => {
             // Service worker registration failure should not break the game.
           });
         });
@@ -1444,6 +1528,11 @@
     twoPlayerButton.addEventListener("click", () => setMode(MODE_TWO_PLAYER));
     aiButton.addEventListener("click", () => setMode(MODE_AI));
     difficultySelect.addEventListener("change", (event) => setDifficulty(event.target.value));
+    updateButtonElement.addEventListener("click", () => {
+      if (waitingWorker) {
+        waitingWorker.postMessage({ type: "SKIP_WAITING" });
+      }
+    });
 
     registerServiceWorker();
     restartGame();
