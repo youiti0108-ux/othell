@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>&#12471;&#12531;&#12503;&#12523;&#12458;&#12475;&#12525;</title>
+  <meta name="theme-color" content="#1f7a45">
+  <meta name="description" content="&#12473;&#12510;&#12507;&#12391;&#12418;&#36938;&#12403;&#12420;&#12377;&#12356;&#12471;&#12531;&#12503;&#12523;&#12394;&#12458;&#12475;&#12525;&#12466;&#12540;&#12512;&#12391;&#12377;&#12290;2&#20154;&#23550;&#25126;&#12392;AI&#23550;&#25126;&#12395;&#23550;&#24540;&#12375;&#12390;&#12356;&#12414;&#12377;&#12290;">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="&#12458;&#12475;&#12525;">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./public/icons/icon.svg">
+  <link rel="apple-touch-icon" href="./public/icons/icon-192.svg">
+  <style>
+    :root {
+      --bg: #f4e7b7;
+      --panel: rgba(255, 251, 238, 0.96);
+      --board: #1f7a45;
+      --board-dark: #155432;
+      --line: #104328;
+      --text: #2f2618;
+      --muted: #6b604d;
+      --accent: #f3b51b;
+      --accent-text: #523400;
+      --secondary: #e7f3eb;
+      --secondary-text: #1e5f3d;
+      --danger: #fff3d8;
+      --hint: rgba(255, 255, 255, 0.42);
+      --shadow: 0 18px 40px rgba(47, 38, 24, 0.16);
+      --radius: 24px;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.5), transparent 40%),
+        linear-gradient(180deg, #f9efc9 0%, #ecd590 100%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: min(100%, 720px);
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      text-align: center;
+      font-size: clamp(1.8rem, 5vw, 2.4rem);
+    }
+
+    .status {
+      background: #fff3bf;
+      border-radius: 18px;
+      padding: 14px 16px;
+      text-align: center;
+      font-weight: 700;
+      line-height: 1.6;
+      margin-bottom: 14px;
+      min-height: 84px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .info-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 12px 14px;
+      box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.04);
+      min-height: 72px;
+    }
+
+    .info-label {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .info-value {
+      display: block;
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .score {
+      background: #fff;
+      border-radius: 18px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 800;
+      box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .stone {
+      width: 22px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      box-shadow: inset -3px -3px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .stone.black {
+      background: radial-gradient(circle at 30% 30%, #5b5b5b 0%, #1e1e1e 60%);
+    }
+
+    .stone.white {
+      background: radial-gradient(circle at 30% 30%, #ffffff 0%, #ececec 70%);
+      border: 1px solid #cfcfcf;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      min-height: 52px;
+      transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+      touch-action: manipulation;
+    }
+
+    button:hover,
+    button:focus-visible {
+      filter: brightness(1.03);
+      transform: translateY(-1px);
+      outline: 3px solid rgba(255, 181, 27, 0.22);
+      outline-offset: 2px;
+    }
+
+    .primary-button {
+      background: var(--accent);
+      color: var(--accent-text);
+      box-shadow: 0 8px 20px rgba(243, 181, 27, 0.32);
+    }
+
+    .secondary-button {
+      background: var(--secondary);
+      color: var(--secondary-text);
+      box-shadow: 0 8px 20px rgba(31, 122, 69, 0.12);
+    }
+
+    .secondary-button.active {
+      background: #caebd5;
+      box-shadow: 0 8px 20px rgba(31, 122, 69, 0.22);
+    }
+
+    .board-wrap {
+      width: 100%;
+      aspect-ratio: 1;
+    }
+
+    .board {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      background: var(--board);
+      border: 6px solid var(--board-dark);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14);
+    }
+
+    .cell {
+      position: relative;
+      border: 1px solid var(--line);
+      background: transparent;
+      padding: 0;
+      cursor: default;
+    }
+
+    .cell.is-interactive {
+      cursor: pointer;
+    }
+
+    .cell.show-hint::after {
+      content: "";
+      position: absolute;
+      inset: 31%;
+      border-radius: 50%;
+      background: var(--hint);
+    }
+
+    .cell.is-interactive:hover,
+    .cell.is-interactive:focus-visible {
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+    }
+
+    .cell.is-locked {
+      cursor: wait;
+    }
+
+    .disc {
+      position: absolute;
+      inset: 12%;
+      border-radius: 50%;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
+    }
+
+    .disc.black {
+      background: radial-gradient(circle at 30% 30%, #585858 0%, #1b1b1b 65%);
+    }
+
+    .disc.white {
+      background: radial-gradient(circle at 30% 30%, #ffffff 0%, #efefef 70%);
+      border: 1px solid #d0d0d0;
+    }
+
+    .assist-badge,
+    .thinking-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      border-radius: 999px;
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+
+    .assist-badge {
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--secondary-text);
+    }
+
+    .thinking-badge {
+      background: var(--danger);
+      color: #7b4f00;
+      font-weight: 800;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .app {
+        padding: 14px;
+        border-radius: 20px;
+      }
+
+      .summary,
+      .scoreboard,
+      .controls {
+        gap: 8px;
+      }
+
+      .info-card,
+      .score,
+      .status {
+        border-radius: 14px;
+      }
+
+      button {
+        font-size: 0.96rem;
+        min-height: 50px;
+        padding: 12px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>&#12458;&#12475;&#12525;</h1>
+
+    <div class="status" id="status" aria-live="polite"></div>
+
+    <section class="summary" aria-label="&#12466;&#12540;&#12512;&#24773;&#22577;">
+      <div class="info-card">
+        <span class="info-label">&#29694;&#22312;&#12398;&#12514;&#12540;&#12489;</span>
+        <span class="info-value" id="mode-display">2&#20154;&#23550;&#25126;</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">&#29694;&#22312;&#12398;&#12479;&#12540;&#12531;</span>
+        <span class="info-value" id="turn-display">&#40658;</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">&#12450;&#12471;&#12473;&#12488;</span>
+        <span class="info-value" id="assist-display">ON</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">&#23550;&#23616;&#29366;&#27841;</span>
+        <span class="info-value" id="game-detail">&#36890;&#24120;&#12503;&#12524;&#12452;&#20013;</span>
+      </div>
+    </section>
+
+    <section class="scoreboard" aria-label="&#30707;&#12398;&#25968;">
+      <div class="score"><span class="stone black"></span><span>&#40658;: <span id="black-count">2</span></span></div>
+      <div class="score"><span class="stone white"></span><span>&#30333;: <span id="white-count">2</span></span></div>
+    </section>
+
+    <section class="controls" aria-label="&#25805;&#20316;&#12508;&#12479;&#12531;">
+      <button id="restart-button" class="primary-button" type="button">&#12522;&#12473;&#12479;&#12540;&#12488;</button>
+      <button id="assist-button" class="secondary-button active" type="button">&#12450;&#12471;&#12473;&#12488; ON</button>
+      <button id="two-player-button" class="secondary-button active" type="button">2&#20154;&#23550;&#25126;</button>
+      <button id="ai-button" class="secondary-button" type="button">AI&#23550;&#25126;</button>
+    </section>
+
+    <div class="board-wrap">
+      <div class="board" id="board" role="grid" aria-label="&#12458;&#12475;&#12525;&#30436;"></div>
+    </div>
+  </main>
+
+  <script>
+    const SIZE = 8;
+    const EMPTY = 0;
+    const BLACK = 1;
+    const WHITE = -1;
+    const MODE_TWO_PLAYER = "two-player";
+    const MODE_AI = "ai";
+    const AI_DELAY_MS = 650;
+    const CORNERS = new Set(["0-0", "0-7", "7-0", "7-7"]);
+    const DIRECTIONS = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],           [0, 1],
+      [1, -1],  [1, 0],  [1, 1]
+    ];
+
+    const TEXT = {
+      black: "\u9ed2",
+      white: "\u767d",
+      modeTwoPlayer: "2\u4eba\u5bfe\u6226",
+      modeAi: "AI\u5bfe\u6226",
+      gameOver: "\u30b2\u30fc\u30e0\u7d42\u4e86",
+      normalPlay: "\u901a\u5e38\u30d7\u30ec\u30a4\u4e2d",
+      assistOn: "\u30a2\u30b7\u30b9\u30c8 ON",
+      assistOff: "\u30a2\u30b7\u30b9\u30c8 OFF",
+      assistBadge: "\u30a2\u30b7\u30b9\u30c8: ",
+      aiThinking: "AI\u8003\u3048\u4e2d...",
+      currentTurn: "\u73fe\u5728\u306e\u30bf\u30fc\u30f3\u306f",
+      turnSuffix: "\u3067\u3059\u3002",
+      noMovePass: "\u306f\u7f6e\u3051\u308b\u5834\u6240\u304c\u306a\u3044\u305f\u3081\u30d1\u30b9\u3067\u3059\u3002",
+      blackWin: "\u30b2\u30fc\u30e0\u7d42\u4e86\u3002\u9ed2\u306e\u52dd\u3061\u3067\u3059\u3002",
+      whiteWin: "\u30b2\u30fc\u30e0\u7d42\u4e86\u3002\u767d\u306e\u52dd\u3061\u3067\u3059\u3002",
+      draw: "\u30b2\u30fc\u30e0\u7d42\u4e86\u3002\u5f15\u304d\u5206\u3051\u3067\u3059\u3002"
+    };
+
+    const boardElement = document.getElementById("board");
+    const statusElement = document.getElementById("status");
+    const blackCountElement = document.getElementById("black-count");
+    const whiteCountElement = document.getElementById("white-count");
+    const modeDisplayElement = document.getElementById("mode-display");
+    const turnDisplayElement = document.getElementById("turn-display");
+    const assistDisplayElement = document.getElementById("assist-display");
+    const gameDetailElement = document.getElementById("game-detail");
+    const restartButton = document.getElementById("restart-button");
+    const assistButton = document.getElementById("assist-button");
+    const twoPlayerButton = document.getElementById("two-player-button");
+    const aiButton = document.getElementById("ai-button");
+
+    let board = [];
+    let currentPlayer = BLACK;
+    let gameOver = false;
+    let statusMessage = "";
+    let gameMode = MODE_TWO_PLAYER;
+    let assistEnabled = true;
+    let aiThinking = false;
+    let aiTimerId = null;
+
+    function createInitialBoard() {
+      const newBoard = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+      newBoard[3][3] = WHITE;
+      newBoard[3][4] = BLACK;
+      newBoard[4][3] = BLACK;
+      newBoard[4][4] = WHITE;
+      return newBoard;
+    }
+
+    function isInside(row, col) {
+      return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+    }
+
+    function getPlayerName(player) {
+      return player === BLACK ? TEXT.black : TEXT.white;
+    }
+
+    function getModeName(mode) {
+      return mode === MODE_AI ? TEXT.modeAi : TEXT.modeTwoPlayer;
+    }
+
+    function clearAiTimer() {
+      if (aiTimerId !== null) {
+        window.clearTimeout(aiTimerId);
+        aiTimerId = null;
+      }
+    }
+
+    function getFlips(targetBoard, row, col, player) {
+      if (!isInside(row, col) || targetBoard[row][col] !== EMPTY) {
+        return [];
+      }
+
+      const flips = [];
+
+      for (const [dr, dc] of DIRECTIONS) {
+        const captured = [];
+        let r = row + dr;
+        let c = col + dc;
+
+        while (isInside(r, c) && targetBoard[r][c] === -player) {
+          captured.push([r, c]);
+          r += dr;
+          c += dc;
+        }
+
+        if (captured.length > 0 && isInside(r, c) && targetBoard[r][c] === player) {
+          flips.push(...captured);
+        }
+      }
+
+      return flips;
+    }
+
+    function getValidMoves(targetBoard, player) {
+      const moves = [];
+      for (let row = 0; row < SIZE; row += 1) {
+        for (let col = 0; col < SIZE; col += 1) {
+          const flips = getFlips(targetBoard, row, col, player);
+          if (flips.length > 0) {
+            moves.push({ row, col, flips });
+          }
+        }
+      }
+      return moves;
+    }
+
+    function countStones() {
+      let black = 0;
+      let white = 0;
+
+      for (const row of board) {
+        for (const cell of row) {
+          if (cell === BLACK) {
+            black += 1;
+          } else if (cell === WHITE) {
+            white += 1;
+          }
+        }
+      }
+
+      return { black, white };
+    }
+
+    function applyMove(row, col, player) {
+      const flips = getFlips(board, row, col, player);
+      if (flips.length === 0) {
+        return false;
+      }
+
+      board[row][col] = player;
+      for (const [flipRow, flipCol] of flips) {
+        board[flipRow][flipCol] = player;
+      }
+      return true;
+    }
+
+    function getGameResultMessage() {
+      const counts = countStones();
+
+      if (counts.black > counts.white) {
+        return TEXT.blackWin;
+      }
+      if (counts.white > counts.black) {
+        return TEXT.whiteWin;
+      }
+      return TEXT.draw;
+    }
+
+    function finishGame() {
+      gameOver = true;
+      aiThinking = false;
+      clearAiTimer();
+      statusMessage = getGameResultMessage();
+    }
+
+    function resolveTurnFlow() {
+      if (gameOver) {
+        return;
+      }
+
+      const currentMoves = getValidMoves(board, currentPlayer);
+      if (currentMoves.length > 0) {
+        return;
+      }
+
+      const passedPlayer = currentPlayer;
+      currentPlayer = -currentPlayer;
+      const nextMoves = getValidMoves(board, currentPlayer);
+
+      if (nextMoves.length > 0) {
+        statusMessage = getPlayerName(passedPlayer) + TEXT.noMovePass;
+        return;
+      }
+
+      finishGame();
+    }
+
+    function chooseAiMove(validMoves) {
+      const cornerMoves = validMoves.filter((move) => CORNERS.has(move.row + "-" + move.col));
+      const candidateMoves = cornerMoves.length > 0 ? cornerMoves : validMoves;
+      let bestScore = -1;
+      let bestMoves = [];
+
+      for (const move of candidateMoves) {
+        const score = move.flips.length;
+        if (score > bestScore) {
+          bestScore = score;
+          bestMoves = [move];
+        } else if (score === bestScore) {
+          bestMoves.push(move);
+        }
+      }
+
+      return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+    }
+
+    function maybeStartAiTurn() {
+      clearAiTimer();
+
+      if (gameOver || gameMode !== MODE_AI || currentPlayer !== WHITE) {
+        aiThinking = false;
+        render();
+        return;
+      }
+
+      const validMoves = getValidMoves(board, WHITE);
+      if (validMoves.length === 0) {
+        aiThinking = false;
+        render();
+        return;
+      }
+
+      aiThinking = true;
+      render();
+
+      aiTimerId = window.setTimeout(() => {
+        if (gameOver || gameMode !== MODE_AI || currentPlayer !== WHITE) {
+          aiThinking = false;
+          render();
+          return;
+        }
+
+        const latestMoves = getValidMoves(board, WHITE);
+        if (latestMoves.length === 0) {
+          aiThinking = false;
+          resolveTurnFlow();
+          render();
+          maybeStartAiTurn();
+          return;
+        }
+
+        const selectedMove = chooseAiMove(latestMoves);
+        applyMove(selectedMove.row, selectedMove.col, WHITE);
+        currentPlayer = BLACK;
+        aiThinking = false;
+        statusMessage = "";
+        resolveTurnFlow();
+        render();
+        maybeStartAiTurn();
+      }, AI_DELAY_MS);
+    }
+
+    function handleMove(row, col) {
+      if (gameOver || aiThinking) {
+        return;
+      }
+
+      if (gameMode === MODE_AI && currentPlayer === WHITE) {
+        return;
+      }
+
+      const placed = applyMove(row, col, currentPlayer);
+      if (!placed) {
+        return;
+      }
+
+      currentPlayer = -currentPlayer;
+      statusMessage = "";
+      resolveTurnFlow();
+      render();
+      maybeStartAiTurn();
+    }
+
+    function setMode(mode) {
+      if (gameMode === mode) {
+        return;
+      }
+
+      gameMode = mode;
+      restartGame();
+    }
+
+    function toggleAssist() {
+      assistEnabled = !assistEnabled;
+      render();
+    }
+
+    function getStatusHtml() {
+      const counts = countStones();
+      const mainText = gameOver
+        ? statusMessage + " " + TEXT.black + " " + counts.black + " - " + counts.white + " " + TEXT.white
+        : (statusMessage || (TEXT.currentTurn + getPlayerName(currentPlayer) + TEXT.turnSuffix));
+
+      const badges = [];
+      badges.push('<div class="assist-badge">' + TEXT.assistBadge + (assistEnabled ? "ON" : "OFF") + "</div>");
+      if (!gameOver && aiThinking) {
+        badges.push('<div class="thinking-badge">' + TEXT.aiThinking + "</div>");
+      }
+
+      return "<div>" + mainText + badges.join("") + "</div>";
+    }
+
+    function updateHeaderInfo() {
+      const counts = countStones();
+      modeDisplayElement.textContent = getModeName(gameMode);
+      turnDisplayElement.textContent = gameOver ? TEXT.gameOver : getPlayerName(currentPlayer);
+      assistDisplayElement.textContent = assistEnabled ? "ON" : "OFF";
+
+      if (gameOver) {
+        gameDetailElement.textContent = TEXT.black + " " + counts.black + " - " + counts.white + " " + TEXT.white;
+      } else if (aiThinking) {
+        gameDetailElement.textContent = TEXT.aiThinking;
+      } else {
+        gameDetailElement.textContent = TEXT.normalPlay;
+      }
+    }
+
+    function updateButtons() {
+      assistButton.textContent = assistEnabled ? TEXT.assistOn : TEXT.assistOff;
+      assistButton.classList.toggle("active", assistEnabled);
+      twoPlayerButton.classList.toggle("active", gameMode === MODE_TWO_PLAYER);
+      aiButton.classList.toggle("active", gameMode === MODE_AI);
+    }
+
+    function renderBoard() {
+      const validMoves = gameOver ? [] : getValidMoves(board, currentPlayer);
+      const validMap = new Map(validMoves.map((move) => [move.row + "-" + move.col, move]));
+      const shouldLockBoard = gameOver || aiThinking || (gameMode === MODE_AI && currentPlayer === WHITE);
+
+      boardElement.innerHTML = "";
+
+      for (let row = 0; row < SIZE; row += 1) {
+        for (let col = 0; col < SIZE; col += 1) {
+          const cellButton = document.createElement("button");
+          cellButton.type = "button";
+          cellButton.className = "cell";
+          cellButton.setAttribute("role", "gridcell");
+          cellButton.setAttribute("aria-label", String(row + 1) + "\u884c" + String(col + 1) + "\u5217");
+
+          const key = row + "-" + col;
+          const isPlayable = validMap.has(key);
+
+          if (board[row][col] !== EMPTY) {
+            const disc = document.createElement("div");
+            disc.className = "disc " + (board[row][col] === BLACK ? "black" : "white");
+            cellButton.appendChild(disc);
+            cellButton.disabled = true;
+          } else if (shouldLockBoard) {
+            cellButton.classList.add("is-locked");
+            cellButton.disabled = true;
+          } else {
+            cellButton.classList.add("is-interactive");
+            if (assistEnabled && isPlayable) {
+              cellButton.classList.add("show-hint");
+            }
+            cellButton.addEventListener("click", () => handleMove(row, col));
+          }
+
+          boardElement.appendChild(cellButton);
+        }
+      }
+    }
+
+    function render() {
+      const counts = countStones();
+      blackCountElement.textContent = counts.black;
+      whiteCountElement.textContent = counts.white;
+      statusElement.innerHTML = getStatusHtml();
+      updateHeaderInfo();
+      updateButtons();
+      renderBoard();
+    }
+
+    function restartGame() {
+      clearAiTimer();
+      board = createInitialBoard();
+      currentPlayer = BLACK;
+      gameOver = false;
+      statusMessage = "";
+      aiThinking = false;
+      render();
+      maybeStartAiTurn();
+    }
+
+    function registerServiceWorker() {
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").catch(() => {
+            // Service worker registration failure should not break the game.
+          });
+        });
+      }
+    }
+
+    restartButton.addEventListener("click", restartGame);
+    assistButton.addEventListener("click", toggleAssist);
+    twoPlayerButton.addEventListener("click", () => setMode(MODE_TWO_PLAYER));
+    aiButton.addEventListener("click", () => setMode(MODE_AI));
+
+    registerServiceWorker();
+    restartGame();
+  </script>
+</body>
+</html>
